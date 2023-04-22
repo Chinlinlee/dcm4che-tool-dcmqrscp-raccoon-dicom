@@ -41,7 +41,11 @@ public class MongoStudy extends  MongoPatient{
     }
 
     public String getStudyTime() {
-        return MongoDicomJson.getString(this.study, "00080030");
+        Double studyTime = MongoDicomJson.getDouble(this.study, "00080030");
+        if (studyTime == 0) {
+            return "";
+        }
+        return String.valueOf(studyTime);
     }
 
     public String getAccessionNumber() {

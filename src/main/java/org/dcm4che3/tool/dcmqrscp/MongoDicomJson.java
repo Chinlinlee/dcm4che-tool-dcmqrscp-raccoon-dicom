@@ -1,6 +1,7 @@
 package org.dcm4che3.tool.dcmqrscp;
 
 import org.bson.Document;
+import org.bson.types.Decimal128;
 
 import java.util.List;
 
@@ -20,6 +21,22 @@ public class MongoDicomJson {
         }
 
         return "";
+    }
+
+    static public double getDouble(Document dicomJson, String tag) {
+        List<Decimal128> bigDecimalList;
+        try {
+            bigDecimalList = dicomJson.get(tag, Document.class)
+                    .getList("Value", Decimal128.class);
+        } catch (Exception e) {
+            return 0;
+        }
+
+        if (bigDecimalList != null && bigDecimalList.size() > 0) {
+            return bigDecimalList.get(0).doubleValue();
+        }
+
+        return 0;
     }
 
     static public List<Document> getValueItem(Document dicomJson, String tag) {

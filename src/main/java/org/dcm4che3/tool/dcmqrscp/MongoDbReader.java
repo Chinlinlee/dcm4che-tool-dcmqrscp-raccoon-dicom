@@ -96,7 +96,7 @@ public class MongoDbReader {
 
         MongoCursor<Document> cursor = studyCollection.find(
                 orFilter
-        ).iterator();
+        ).cursor();
 
         return cursor;
     }
@@ -107,9 +107,9 @@ public class MongoDbReader {
         Bson query = MongoQueryFactory.getStudyQuery(keys);
         if (query!=null) {
             System.out.println(query.toBsonDocument().toJson().toString());
-            cursor = studyCollection.find(query).iterator();
+            cursor = studyCollection.find(query).cursor();
         } else {
-            cursor = studyCollection.find().iterator();
+            cursor = studyCollection.find().cursor();
         }
 
         return cursor;
@@ -292,32 +292,46 @@ class MongoQueryFactory {
         return Filters.or(filterArr);
     }
 
+    public static double getTimeFromStr(String str) {
+        double inputTimeD = Double.parseDouble(str);
+        String timeStrPaddingZero = String.format("%06.6f", inputTimeD);
+        return Double.parseDouble(timeStrPaddingZero);
+    }
+
     public static Bson getTimeQuery(String[] timeStrs, String field) {
         Bson[] filterArr = new Bson[timeStrs.length];
-        DateTimeFormatter dateTimeFormatter = DateTimeFormatter.ofPattern("HHmmss");
 
         for (int i = 0 ; i < timeStrs.length ; i++) {
-            String timeStr = String.format("%-6", timeStrs[i]).replace(' ', '0');
-            Double time =  Double.parseDouble(timeStr);
 
-            int dashIndex = timeStr.indexOf("-");
+            int dashIndex = timeStrs[i].indexOf("-");
             if (dashIndex == 0) { // -HHmmss
 
+                String timeStr = timeStrs[i].substring(1);
+                Double time = getTimeFromStr(timeStr);
                 filterArr[i] = Filters.lte(field, time);
 
-            } else if (dashIndex == (timeStr.length()-1)) { // HHmmss-
+            } else if (dashIndex == (timeStrs[i].length()-1)) { // HHmmss-
 
+                String timeStr = timeStrs[i].substring(dashIndex);
+                Double time = getTimeFromStr(timeStr);
                 filterArr[i] = Filters.gte(field,  time);
 
             } else if (dashIndex > 0) { // HHmmss-HHmmss
 
+                String startTimeStr = timeStrs[i].substring(1, dashIndex);
+                String endTimeStr = timeStrs[i].substring(dashIndex);
+
+                Double startTime = getTimeFromStr(startTimeStr);
+                Double endTime = getTimeFromStr(endTimeStr);
+
                 filterArr[i] = Filters.and(
-                        Filters.gte(field, time),
-                        Filters.lte(field, time)
+                        Filters.gte(field, startTime),
+                        Filters.lte(field, endTime)
                 );
 
             } else { // HHmmss
 
+                Double time = getTimeFromStr(timeStrs[i]);
                 filterArr[i] = Filters.eq(field, time);
 
             }
