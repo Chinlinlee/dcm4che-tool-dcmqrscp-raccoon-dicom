@@ -1,0 +1,23 @@
+# Java-specific
+*.class
+*.jar
+*.war
+*.ear
+*.iml
+.idea/
+target/
+
+# Eclipse-specific
+.settings/
+.classpath
+.project
+.metadata/
+
+# IntelliJ-specific
+*.ipr
+*.iws
+*.iml
+.idea/
+out/
+
+**/raccoon-app.json
