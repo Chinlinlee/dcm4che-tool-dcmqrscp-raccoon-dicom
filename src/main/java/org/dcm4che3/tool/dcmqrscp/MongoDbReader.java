@@ -240,8 +240,11 @@ class MongoQueryFactory {
     public static Bson getStringsQuery(String[] strings, String field) {
         Bson[] filterArr = new Bson[strings.length];
         for(int i = 0 ; i < strings.length ;i++) {
-            if (strings[i].contains("*")) {
+            if (strings[i].contains("*") || strings[i].contains("?")) {
+                strings[i] = strings[i].replace(".*","*");
                 strings[i] = strings[i].replace("*",".*");
+                strings[i] = strings[i].replace("?", ".");
+                strings[i] = strings[i].replace("^", "\\^");
                 filterArr[i] = Filters.regex(field, strings[i], "gm");
             } else {
                 filterArr[i] = Filters.eq(field, strings[i]);
