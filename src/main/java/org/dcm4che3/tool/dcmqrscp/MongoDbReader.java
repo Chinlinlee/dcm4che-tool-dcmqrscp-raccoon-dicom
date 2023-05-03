@@ -80,7 +80,7 @@ public class MongoDbReader {
     public MongoCursor<Document> findStudyRecord(MongoPatient patient, String[] studyUIDs) {
 
         Bson patientIDFilter = Filters.eq("00100020.Value", patient.getPatientID());
-        Bson orFilter;
+        Bson andFilter;
 
         if (studyUIDs != null) {
             Bson[] studyUIDFilter = new Bson[studyUIDs.length];
@@ -89,13 +89,13 @@ public class MongoDbReader {
             }
             Bson studyUIDsOrFilter = Filters.or(studyUIDFilter);
 
-            orFilter = Filters.or(patientIDFilter, studyUIDsOrFilter);
+            andFilter = Filters.and(patientIDFilter, studyUIDsOrFilter);
         } else {
-            orFilter = Filters.or(patientIDFilter);
+            andFilter = Filters.and(patientIDFilter);
         }
 
         MongoCursor<Document> cursor = studyCollection.find(
-                orFilter
+                andFilter
         ).cursor();
 
         return cursor;
@@ -166,7 +166,7 @@ public class MongoDbReader {
 
             Bson[] instanceUIDsFilters = new Bson[sopUIDs.length];
             for (int i = 0 ; i < sopUIDs.length ; i++) {
-                instanceUIDsFilters[i] = Filters.eq("series.instance.dicomJson.00080018.Value", sopUIDs[i]);
+                instanceUIDsFilters[i] = Filters.eq("00080018.Value", sopUIDs[i]);
             }
 
 
