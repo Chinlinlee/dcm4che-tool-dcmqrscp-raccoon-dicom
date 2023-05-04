@@ -1170,8 +1170,8 @@ public class DcmQRSCP {
     protected int runNodeRaccoonUploadScript(String dicomPath) throws IOException, InterruptedException {
         ProcessBuilder processBuilder = new ProcessBuilder();
 
-        if (raccoonAppConfig.raccoon.getMode().equals("WADO")) {
-            processBuilder.command("node", raccoonAppConfig.raccoon.getRaccoonUploadScriptPathPath(), "-i", dicomPath, "-u", raccoonAppConfig.raccoon.getWadoUrl());
+        if (raccoonAppConfig.raccoon.getMode().toUpperCase(Locale.ROOT).equals("STOW")) {
+            processBuilder.command("node", raccoonAppConfig.raccoon.getRaccoonUploadScriptPathPath(), "-i", dicomPath, "-u", raccoonAppConfig.raccoon.getStowUrl());
         } else {
             processBuilder.command("node", raccoonAppConfig.raccoon.getRaccoonUploadScriptPathPath(), "-i", dicomPath);
         }

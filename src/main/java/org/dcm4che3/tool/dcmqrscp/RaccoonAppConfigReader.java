@@ -49,7 +49,7 @@ class RaccoonAppConfig {
         private String dicomStoreRoot;
         private String raccoonUploadScriptPath;
         private String mode;
-        private String wadoUrl;
+        private String stowUrl;
 
         public String getDicomStoreRoot() {
             return dicomStoreRoot;
@@ -61,8 +61,8 @@ class RaccoonAppConfig {
 
         public String getMode() { return mode; }
 
-        public String getWadoUrl() {
-            return wadoUrl;
+        public String getStowUrl() {
+            return stowUrl;
         }
     }
 
