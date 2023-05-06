@@ -295,10 +295,23 @@ class MongoQueryFactory {
         return Filters.or(filterArr);
     }
 
+    public static String getTimePadding(String timeStr) {
+        String hhmmssTimeStr = String.format("%-6s", timeStr).replace(' ', '0');
+        if (timeStr.length() == 5) {
+            hhmmssTimeStr = String.format("%6s", timeStr).replace(' ', '0');
+        }
+        return hhmmssTimeStr;
+    }
+
     public static double getTimeFromStr(String str) {
-        double inputTimeD = Double.parseDouble(str);
-        String timeStrPaddingZero = String.format("%06.6f", inputTimeD);
-        return Double.parseDouble(timeStrPaddingZero);
+        String fullTimeStr = getTimePadding(str);
+        if (str.contains(".")) {
+            String[] timeStrSplit = str.split("\\.");
+            String timeStr = timeStrSplit[0];
+            String millionthSecondStr = timeStrSplit[1];
+            fullTimeStr = getTimePadding(timeStr) + "." + millionthSecondStr;
+        }
+        return Double.parseDouble(fullTimeStr);
     }
 
     public static Bson getTimeQuery(String[] timeStrs, String field) {
@@ -315,14 +328,14 @@ class MongoQueryFactory {
 
             } else if (dashIndex == (timeStrs[i].length()-1)) { // HHmmss-
 
-                String timeStr = timeStrs[i].substring(dashIndex);
+                String timeStr = timeStrs[i].substring(0, dashIndex);
                 Double time = getTimeFromStr(timeStr);
                 filterArr[i] = Filters.gte(field,  time);
 
             } else if (dashIndex > 0) { // HHmmss-HHmmss
 
-                String startTimeStr = timeStrs[i].substring(1, dashIndex);
-                String endTimeStr = timeStrs[i].substring(dashIndex);
+                String startTimeStr = timeStrs[i].substring(0, dashIndex);
+                String endTimeStr = timeStrs[i].substring(dashIndex+1);
 
                 Double startTime = getTimeFromStr(startTimeStr);
                 Double endTime = getTimeFromStr(endTimeStr);
