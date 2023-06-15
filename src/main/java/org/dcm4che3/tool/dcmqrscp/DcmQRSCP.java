@@ -990,56 +990,28 @@ public class DcmQRSCP {
             }
 
             List<InstanceLocator> list = new ArrayList<InstanceLocator>();
-            String[] patIDs = keys.getStrings(Tag.PatientID);
-            String[] studyIUIDs = keys.getStrings(Tag.StudyInstanceUID);
-            String[] seriesIUIDs = keys.getStrings(Tag.SeriesInstanceUID);
-            String[] sopIUIDs = keys.getStrings(Tag.SOPInstanceUID);
 
-            MongoCursor<Document> patientRecord = this.mongoDbReader.findPatientRecord(patIDs);
-            while (patientRecord.hasNext()) {
+            Attributes clonedKeys = new Attributes();
+            clonedKeys.addSelected(keys, Tag.SOPInstanceUID, Tag.PatientID, Tag.StudyInstanceUID, Tag.SeriesInstanceUID);
 
-                MongoPatient mongoPatient = new MongoPatient(patientRecord.next());
-                Attributes patientAttr = mongoPatient.getAttributes();
-                MongoCursor<Document> studyRecord = this.mongoDbReader.findStudyRecord(mongoPatient, studyIUIDs);
+            MongoCursor<Document> instanceRecords = this.mongoDbReader.findLowerInstanceRecord(clonedKeys);
+            while (instanceRecords.hasNext()) {
 
-                while(studyRecord.hasNext()) {
-                    MongoStudy mongoStudy = new MongoStudy(mongoPatient.patient, studyRecord.next());
-                    Iterator<Document> seriesRecord = this.mongoDbReader.findSeriesRecord(mongoStudy, seriesIUIDs);
+                MongoInstance mongoInstance = new MongoInstance(
+                        null,
+                        null,
+                        null,
+                        instanceRecords.next(),
+                        this.raccoonAppConfig.raccoon.getDicomStoreRoot()
+                );
 
-                    while(seriesRecord.hasNext()) {
-                        MongoSeries mongoSeries = new MongoSeries(mongoStudy.patient, mongoStudy.study, seriesRecord.next());
-                        MongoCursor<Document> instanceRecord = this.mongoDbReader.findLowerInstanceRecord(mongoPatient, mongoStudy, mongoSeries, sopIUIDs);
+                String cuid = mongoInstance.getSOPClassUID();
+                String iuid = mongoInstance.getSOPInstanceUID();
+                String tsuid = mongoInstance.getTransferSyntaxUID();
+                String fileUri = mongoInstance.getStorePathURI();
 
-                        while (instanceRecord.hasNext()) {
-                            MongoInstance mongoInstance = new MongoInstance(
-                                    mongoSeries.patient,
-                                    mongoSeries.study,
-                                    mongoSeries.series,
-                                    instanceRecord.next(),
-                                    this.raccoonAppConfig.raccoon.getDicomStoreRoot()
-                            );
-
-                            String cuid = mongoInstance.getSOPClassUID();
-                            String iuid = mongoInstance.getSOPInstanceUID();
-                            String tsuid = mongoInstance.getTransferSyntaxUID();
-                            String fileUri = mongoInstance.getStorePathURI();
-
-                            InstanceLocator instanceLocator = new InstanceLocator(cuid, iuid, tsuid, fileUri);
-                            list.add(instanceLocator);
-                            if (sopIUIDs != null && sopIUIDs.length == 1)
-                                break;
-
-                        }
-
-                        if (seriesIUIDs != null && seriesIUIDs.length == 1)
-                            break;
-
-                    }
-
-                }
-
-                if (patIDs != null && patIDs.length == 1)
-                    break;
+                InstanceLocator instanceLocator = new InstanceLocator(cuid, iuid, tsuid, fileUri);
+                list.add(instanceLocator);
 
             }
 
