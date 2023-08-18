@@ -39,8 +39,12 @@
 package org.dcm4che3.tool.dcmqrscp;
 
 import java.io.IOException;
+import java.util.Iterator;
 
+import com.google.gson.Gson;
 import com.mongodb.client.MongoCursor;
+
+import org.apache.ibatis.cursor.Cursor;
 import org.bson.Document;
 import org.dcm4che3.data.Tag;
 import org.dcm4che3.data.Attributes;
@@ -52,6 +56,7 @@ import org.dcm4che3.net.Status;
 import org.dcm4che3.net.pdu.PresentationContext;
 import org.dcm4che3.net.service.BasicQueryTask;
 import org.dcm4che3.net.service.DicomServiceException;
+import org.dcm4che3.tool.dcmqrscp.mybatis.entity.Patient;
 import org.dcm4che3.util.StringUtils;
 
 class PatientQueryTask extends BasicQueryTask {
@@ -66,6 +71,7 @@ class PatientQueryTask extends BasicQueryTask {
     protected Attributes patRec;
     protected MongoPatient mongoPatRec;
     protected MongoCursor<Document> cursor;
+    protected Iterator<Patient> patientIter;
 
     public PatientQueryTask(Association as, PresentationContext pc, Attributes rq, Attributes keys, DcmQRSCP qrscp)
             throws DicomServiceException {
@@ -77,7 +83,8 @@ class PatientQueryTask extends BasicQueryTask {
         this.ignoreCaseOfPN = qrscp.isIgnoreCaseOfPN();
         this.matchNoValue = qrscp.isMatchNoValue();
         this.delayCFind = qrscp.getDelayCFind();
-        this.cursor = qrscp.getMongoDbReader().findPatientRecord(keys);
+        Cursor<Patient> sqlCursor = new SqlReader().findPatientRecord();
+        this.patientIter = sqlCursor.iterator();
         wrappedFindNextPatient();
 
     }
@@ -99,23 +106,11 @@ class PatientQueryTask extends BasicQueryTask {
         Attributes adjust = super.adjust(match);
         if (adjust.containsValue(Tag.DirectoryRecordType))
             adjust.remove(Tag.DirectoryRecordType);
-//        if (keys.contains(Tag.SOPClassUID))
-//             adjust.setString(Tag.SOPClassUID, VR.UI,
-//                     match.getString(Tag.ReferencedSOPClassUIDInFile));
-//        if (keys.contains(Tag.SOPInstanceUID))
-//             adjust.setString(Tag.SOPInstanceUID, VR.UI,
-//                     match.getString(Tag.ReferencedSOPInstanceUIDInFile));
         adjust.setString(Tag.QueryRetrieveLevel, VR.CS,
                 keys.getString(Tag.QueryRetrieveLevel));
         adjust.setString(Tag.RetrieveAETitle, VR.AE, as.getCalledAET());
         if (availability != null)
             adjust.setString(Tag.InstanceAvailability, VR.CS, availability);
-//        adjust.setString(Tag.StorageMediaFileSetID, VR.SH, ddr.getFileSetID());
-//        adjust.setString(Tag.StorageMediaFileSetUID, VR.UI, ddr.getFileSetUID());
-//        match.setString(Tag.SOPClassUID, VR.UI,
-//                match.getString(Tag.ReferencedSOPClassUIDInFile));
-//        match.setString(Tag.SOPInstanceUID, VR.UI,
-//                match.getString(Tag.ReferencedSOPInstanceUIDInFile));
         if (delayCFind > 0)
             try {
                 Thread.sleep(delayCFind);
@@ -132,9 +127,9 @@ class PatientQueryTask extends BasicQueryTask {
     }
 
     protected void getPatient() {
-        if (cursor.hasNext()) {
-            Document doc = cursor.next();
-            mongoPatRec = new MongoPatient(doc);
+        if (patientIter.hasNext()) {
+            Patient doc = patientIter.next();
+            String jsonStr = new Gson().toJson(doc.getJson());
             patRec = mongoPatRec.getAttributes();
         } else {
             patRec = null;

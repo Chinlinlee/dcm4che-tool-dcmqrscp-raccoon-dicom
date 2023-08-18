@@ -68,7 +68,11 @@ class RaccoonAppConfig {
 
     public MongodbConfig mongodb;
     public RaccoonConfig raccoon;
+    private String mybatisConfigFile;
 
+    public String getMybatisConfigFile() {
+        return mybatisConfigFile;
+    }
 }
 
 public class RaccoonAppConfigReader {

@@ -231,7 +231,11 @@ public class DcmQRSCP {
 
             switch(level) {
             case PATIENT:
-                return new PatientQueryTask(as, pc, rq, keys, DcmQRSCP.this);
+                try {
+                    return new PatientQueryTask(as, pc, rq, keys, DcmQRSCP.this);
+                } catch (Exception e) {
+                    e.printStackTrace();
+                }
             case STUDY:
                 return new StudyQueryTask(as, pc, rq, keys, DcmQRSCP.this);
             case SERIES:
@@ -833,6 +837,7 @@ public class DcmQRSCP {
             java.util.logging.Logger.getLogger("org.mongodb.driver.management").setLevel(Level.INFO);
         }
 
+        SqlConnector.initSqlSessionFactory(main.raccoonAppConfig.getMybatisConfigFile());
         MongoDBConnector mongoDBConnector = new MongoDBConnector(main.raccoonAppConfig.mongodb);
         main.mongoDbReader = new MongoDbReader(mongoDBConnector.mongoClient, main.raccoonAppConfig.mongodb);
     }
@@ -1172,6 +1177,8 @@ public class DcmQRSCP {
     public MongoDbReader getMongoDbReader() {
         return mongoDbReader;
     }
+
+
 
     public RaccoonAppConfig getRaccoonAppConfig() {
         return raccoonAppConfig;

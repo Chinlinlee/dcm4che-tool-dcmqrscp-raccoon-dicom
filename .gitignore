@@ -21,3 +21,6 @@ target/
 out/
 
 **/raccoon-app.json
+**/mybatis-config.xml
+
+/.vscode
